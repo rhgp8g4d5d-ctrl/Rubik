@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ms">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubik File Lock 3D</title>
+    <style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #171c27;
+    color: white;
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+    padding: 20px;
+}
+
+h1 {
+    color: #38bdf8;
+}
+
+#status {
+    color: #facc15;
+    margin: 20px;
+}
+
+.scene {
+    width: 260px;
+    height: 280px;
+    margin: 20px auto;
+    perspective: 800px;
+    touch-action: none;
+    cursor: grab;
+}
+
+.scene:active {
+    cursor: grabbing;
+}
+
+.cube {
+    width: 180px;
+    height: 180px;
+    position: relative;
+    margin: auto;
+    top: 40px;
+    transform-style: preserve-3d;
+}
+
+.face {
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 5px;
+    padding: 5px;
+    background: #080808;
+    border-radius: 10px;
+    backface-visibility: hidden;
+}
+
+.sticker {
+    border-radius: 7px;
+    border: 2px solid #111;
+}
+
+.front {
+    transform: translateZ(90px);
+}
+
+.back {
+    transform: rotateY(180deg) translateZ(90px);
+}
+
+.right {
+    transform: rotateY(90deg) translateZ(90px);
+}
+
+.left {
+    transform: rotateY(-90deg) translateZ(90px);
+}
+
+.top {
+    transform: rotateX(90deg) translateZ(90px);
+}
+
+.bottom {
+    transform: rotateX(-90deg) translateZ(90px);
+}
+
+.controls {
+    margin-top: 25px;
+}
+
+button {
+    background: #252e40;
+    color: white;
+    border: 1px solid #475569;
+    padding: 14px 22px;
+    margin: 5px;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0369a1;
+}
+
+#secret {
+    display: none;
+    background: #064e3b;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+</style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔐 Rubik File Lock</h1>
+      <p>Geser Rubik menggunakan jari atau mouse.</p>
+      <div id="status">🔒 FAIL TERKUNCI</div>
+      <div class="scene" id="scene">
+        <div class="cube" id="cube">
+          <div class="face front">
+          </div>
+          <div class="face back">
+          </div>
+          <div class="face right">
+          </div>
+          <div class="face left">
+          </div>
+          <div class="face top">
+          </div>
+          <div class="face bottom">
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button onclick="scramble()">
+          🎲 Scramble
+        </button>
+        <button onclick="resetCube()">
+          ↻ Reset
+        </button>
+      </div>
+      <div id="secret">
+        <h2>🔓 Fail Berjaya Dibuka!</h2>
+        <p>Kandungan fail rahsia dipaparkan.</p>
+      </div>
+    </div>
+    <script>
+
+// Warna Rubik
+const colors = [
+    "#ffffff", // putih
+    "#facc15", // kuning
+    "#22c55e", // hijau
+    "#3b82f6", // biru
+    "#ef4444", // merah
+    "#f97316"  // oren
+];
+
+// Susunan warna asal
+const original = [
+    colors[0],
+    colors[1],
+    colors[2],
+    colors[3],
+    colors[4],
+    colors[5]
+];
+
+// Semua permukaan
+const faces = document.querySelectorAll(".face");
+
+// Membina 9 petak setiap permukaan
+function createCube() {
+
+    faces.forEach((face, index) => {
+
+        face.innerHTML = "";
+
+        for (let i = 0; i < 9; i++) {
+
+            const sticker = document.createElement("div");
+
+            sticker.className = "sticker";
+
+            sticker.style.background =
+                original[index];
+
+            face.appendChild(sticker);
+
+        }
+
+    });
+
+}
+
+createCube();
+
+// Putaran pandangan kubus
+let rotateX = -25;
+let rotateY = -35;
+
+const cube = document.getElementById("cube");
+
+function updateRotation() {
+
+    cube.style.transform =
+        `rotateX(${rotateX}deg)
+         rotateY(${rotateY}deg)`;
+
+}
+
+updateRotation();
+
+// Kawalan swipe mouse dan touch
+const scene = document.getElementById("scene");
+
+let dragging = false;
+let previousX = 0;
+let previousY = 0;
+
+scene.addEventListener("pointerdown", function(e) {
+
+    dragging = true;
+
+    previousX = e.clientX;
+    previousY = e.clientY;
+
+    scene.setPointerCapture(e.pointerId);
+
+});
+
+scene.addEventListener("pointermove", function(e) {
+
+    if (!dragging) return;
+
+    let deltaX = e.clientX - previousX;
+    let deltaY = e.clientY - previousY;
+
+    rotateY += deltaX * 0.8;
+    rotateX -= deltaY * 0.8;
+
+    previousX = e.clientX;
+    previousY = e.clientY;
+
+    updateRotation();
+
+});
+
+scene.addEventListener("pointerup", function() {
+    dragging = false;
+});
+
+scene.addEventListener("pointercancel", function() {
+    dragging = false;
+});
+
+// Scramble visual
+function scramble() {
+
+    faces.forEach(face => {
+
+        const stickers =
+            face.querySelectorAll(".sticker");
+
+        stickers.forEach(sticker => {
+
+            const randomColor =
+                colors[Math.floor(Math.random() * colors.length)];
+
+            sticker.style.background = randomColor;
+
+        });
+
+    });
+
+    document.getElementById("status").innerText =
+        "🧩 RUBIK DIACAK";
+
+    document.getElementById("secret").style.display =
+        "none";
+
+}
+
+// Reset
+function resetCube() {
+
+    createCube();
+
+    rotateX = -25;
+    rotateY = -35;
+
+    updateRotation();
+
+    document.getElementById("status").innerText =
+        "🔒 FAIL TERKUNCI";
+
+    document.getElementById("secret").style.display =
+        "none";
+
+}
+
+</script>
+  </body>
+</html>
